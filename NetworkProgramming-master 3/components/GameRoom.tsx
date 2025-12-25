@@ -58,10 +58,18 @@ export default function GameRoom({
         gameState.board.flat().forEach((c: any) => c && used.add(c.footballer));
         const validUnused = valid.filter(p => !used.has(p.name));
 
-        if (!validUnused.length) return [];
+        // If no unused players, we should still show the USED players so the user knows why.
+        if (!validUnused.length) {
+            // Check if there are ANY valid players (even used ones)
+            const validUsed = valid.filter(p => used.has(p.name));
+            if (validUsed.length > 0) {
+                return validUsed.map(p => ({ player: p, isCorrect: true, isUsed: true }));
+            }
+            return [];
+        }
 
         const correct = validUnused[0];
-        const options = [{ player: correct, isCorrect: true }];
+        const options = [{ player: correct, isCorrect: true, isUsed: false }];
 
         const wrong = playersData.filter(p => {
             if (p.name === correct.name) return false;
@@ -71,7 +79,7 @@ export default function GameRoom({
             return !(hasRow && hasCol);
         }).slice(0, 3);
 
-        wrong.forEach(w => options.push({ player: w, isCorrect: false }));
+        wrong.forEach(w => options.push({ player: w, isCorrect: false, isUsed: false }));
 
         for (let i = options.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -250,11 +258,17 @@ export default function GameRoom({
                             </p>
                             <div className="player-list">
                                 {playerOptions.map((opt: any, i: number) => (
-                                    <button key={i} className="player-button" onClick={() => {
-                                        onMakeMove(selectedCell.row, selectedCell.col, opt.player.name);
-                                        setSelectedCell(null);
-                                    }}>
-                                        {opt.player.name}
+                                    <button
+                                        key={i}
+                                        className={`player-button ${opt.isUsed ? 'disabled' : ''}`}
+                                        onClick={() => {
+                                            if (opt.isUsed) return;
+                                            onMakeMove(selectedCell.row, selectedCell.col, opt.player.name);
+                                            setSelectedCell(null);
+                                        }}
+                                        disabled={opt.isUsed}
+                                    >
+                                        {opt.player.name} {opt.isUsed ? '(Used)' : ''}
                                     </button>
                                 ))}
                             </div>
@@ -279,8 +293,15 @@ export default function GameRoom({
                                 </>
                             ) : (
                                 <>
-                                    <h1>{gameOver.winner === role ? 'YOU WIN!' : gameOver.winner === 'draw' ? 'DRAW!' : 'YOU LOSE!'}</h1>
+                                    <h1>{gameOver.winner === role ? 'You won' : gameOver.winner === 'draw' ? 'Draw' : 'You lost'}</h1>
                                     <p>{gameOver.winner === 'draw' ? "It's a tie!" : `Winner: ${gameOver.winner === 'player1' ? 'Player 1' : 'Player 2'}`}</p>
+
+                                    {gameOver.winner === role && gameOver.prize > 0 && (
+                                        <div className="prize-display" style={{ fontSize: '1.5rem', color: '#ffd700', margin: '1rem 0' }}>
+                                            +{gameOver.prize} Coins 🪙
+                                        </div>
+                                    )}
+
                                     <button className="start-game-btn" onClick={() => onLeave(false)}>Return to Lobby</button>
                                 </>
                             )}

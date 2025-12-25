@@ -20,6 +20,7 @@ const rooms = new Map();
 
 // Helper to create a new game state
 function createGameState() {
+  const randomTeams = generateRandomTeams();
   return {
     board: [
       [null, null, null],
@@ -28,10 +29,7 @@ function createGameState() {
     ],
     currentTurn: 'player1',
     usedFootballers: new Set(),
-    teams: {
-      rows: ['Barcelona', 'Real Madrid', 'Manchester United'],
-      cols: ['PSG', 'Juventus', 'Bayern Munich']
-    },
+    teams: randomTeams,
     players: [], // Array of { socket, role, username }
     status: 'waiting', // waiting, playing
     host: null // username of host
@@ -55,6 +53,59 @@ function loadPlayers() {
 
 // Initialize players data
 loadPlayers();
+
+// Load pre-calculated valid games
+let validGames = [];
+const validGamesPath = path.join(__dirname, 'data', 'valid_games.json');
+
+function loadValidGames() {
+  try {
+    if (fs.existsSync(validGamesPath)) {
+      const data = fs.readFileSync(validGamesPath, 'utf8');
+      validGames = JSON.parse(data);
+      console.log(`Loaded ${validGames.length} valid game configurations.`);
+    } else {
+      console.warn('valid_games.json not found. Generating simple fallback...');
+      // Minimal fallback if file missing
+      validGames = [{
+        rows: ['Barcelona', 'Real Madrid', 'Manchester United'],
+        potentialCols: ['PSG', 'Juventus', 'Bayern Munich']
+      }];
+    }
+  } catch (err) {
+    console.error('Error loading valid_games.json:', err);
+  }
+}
+
+loadValidGames();
+
+/**
+ * Get random valid 3x3 teams from pre-calculated list
+ */
+function generateRandomTeams() {
+  if (validGames.length === 0) {
+    return {
+      rows: ['Barcelona', 'Real Madrid', 'Manchester United'],
+      cols: ['PSG', 'Juventus', 'Bayern Munich']
+    };
+  }
+
+  // Pick a random configuration
+  const config = validGames[Math.floor(Math.random() * validGames.length)];
+
+  // Pick 3 random cols from the potentialCols
+  // Shuffle potentialCols first
+  const colsPool = [...config.potentialCols];
+  for (let i = colsPool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [colsPool[i], colsPool[j]] = [colsPool[j], colsPool[i]];
+  }
+
+  return {
+    rows: config.rows,
+    cols: colsPool.slice(0, 3)
+  };
+}
 
 /**
  * Reset game state for a specific room
@@ -540,7 +591,12 @@ app.prepare().then(() => {
           if (winnerResult) {
             broadcastToRoom(roomId, {
               type: 'gameOver',
-              payload: { winner: winnerResult.winner, winningCells: winnerResult.winningCells, board: room.board }
+              payload: {
+                winner: winnerResult.winner,
+                winningCells: winnerResult.winningCells,
+                board: room.board,
+                prize: room.prize || 0 // Send prize info
+              }
             });
 
             // Update stats & coins

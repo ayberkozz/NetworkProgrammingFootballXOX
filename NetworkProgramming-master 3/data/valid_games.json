@@ -1,0 +1,278 @@
+[
+  {
+    "rows": [
+      "Manchester United",
+      "Inter",
+      "Chelsea"
+    ],
+    "potentialCols": [
+      "PSG",
+      "Bayern Munich",
+      "Arsenal"
+    ]
+  },
+  {
+    "rows": [
+      "Manchester United",
+      "Real Madrid",
+      "Inter"
+    ],
+    "potentialCols": [
+      "PSG",
+      "Bayern Munich",
+      "Arsenal"
+    ]
+  },
+  {
+    "rows": [
+      "PSG",
+      "Manchester United",
+      "Bayern Munich"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Real Madrid",
+      "Inter"
+    ]
+  },
+  {
+    "rows": [
+      "Manchester United",
+      "Liverpool",
+      "Chelsea"
+    ],
+    "potentialCols": [
+      "Real Madrid",
+      "AC Milan",
+      "Bayern Munich"
+    ]
+  },
+  {
+    "rows": [
+      "PSG",
+      "Liverpool",
+      "Bayern Munich"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Real Madrid",
+      "Chelsea"
+    ]
+  },
+  {
+    "rows": [
+      "Juventus",
+      "Bayern Munich",
+      "Arsenal"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Manchester United",
+      "Real Madrid"
+    ]
+  },
+  {
+    "rows": [
+      "PSG",
+      "Juventus",
+      "Bayern Munich"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Manchester United",
+      "Real Madrid"
+    ]
+  },
+  {
+    "rows": [
+      "Barcelona",
+      "Real Madrid",
+      "AC Milan"
+    ],
+    "potentialCols": [
+      "PSG",
+      "Manchester United",
+      "Liverpool"
+    ]
+  },
+  {
+    "rows": [
+      "Real Madrid",
+      "AC Milan",
+      "Bayern Munich"
+    ],
+    "potentialCols": [
+      "Manchester United",
+      "Liverpool",
+      "Chelsea"
+    ]
+  },
+  {
+    "rows": [
+      "Real Madrid",
+      "Inter",
+      "Chelsea"
+    ],
+    "potentialCols": [
+      "PSG",
+      "Liverpool",
+      "Arsenal"
+    ]
+  },
+  {
+    "rows": [
+      "PSG",
+      "Juventus",
+      "Arsenal"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Manchester United",
+      "Real Madrid"
+    ]
+  },
+  {
+    "rows": [
+      "PSG",
+      "Manchester United",
+      "Liverpool"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Real Madrid",
+      "Inter"
+    ]
+  },
+  {
+    "rows": [
+      "Manchester United",
+      "Real Madrid",
+      "Chelsea"
+    ],
+    "potentialCols": [
+      "PSG",
+      "Bayern Munich",
+      "Arsenal"
+    ]
+  },
+  {
+    "rows": [
+      "PSG",
+      "Liverpool",
+      "Arsenal"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Real Madrid",
+      "Chelsea"
+    ]
+  },
+  {
+    "rows": [
+      "Barcelona",
+      "Real Madrid",
+      "Chelsea"
+    ],
+    "potentialCols": [
+      "PSG",
+      "Liverpool",
+      "Bayern Munich"
+    ]
+  },
+  {
+    "rows": [
+      "Barcelona",
+      "Manchester United",
+      "Chelsea"
+    ],
+    "potentialCols": [
+      "PSG",
+      "Bayern Munich",
+      "Arsenal"
+    ]
+  },
+  {
+    "rows": [
+      "Liverpool",
+      "Bayern Munich",
+      "Arsenal"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Real Madrid",
+      "Chelsea"
+    ]
+  },
+  {
+    "rows": [
+      "PSG",
+      "Bayern Munich",
+      "Arsenal"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Manchester United",
+      "Real Madrid"
+    ]
+  },
+  {
+    "rows": [
+      "PSG",
+      "Juventus",
+      "Liverpool"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Real Madrid",
+      "AC Milan"
+    ]
+  },
+  {
+    "rows": [
+      "Barcelona",
+      "Real Madrid",
+      "Inter"
+    ],
+    "potentialCols": [
+      "PSG",
+      "Manchester United",
+      "Liverpool"
+    ]
+  },
+  {
+    "rows": [
+      "Manchester United",
+      "Juventus",
+      "Liverpool"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Real Madrid",
+      "Inter"
+    ]
+  },
+  {
+    "rows": [
+      "Manchester United",
+      "Juventus",
+      "Bayern Munich"
+    ],
+    "potentialCols": [
+      "Barcelona",
+      "Real Madrid",
+      "Inter"
+    ]
+  },
+  {
+    "rows": [
+      "Barcelona",
+      "Manchester United",
+      "Real Madrid"
+    ],
+    "potentialCols": [
+      "PSG",
+      "Juventus",
+      "Bayern Munich"
+    ]
+  }
+]
