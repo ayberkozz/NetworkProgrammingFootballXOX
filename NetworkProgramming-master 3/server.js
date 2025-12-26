@@ -19,8 +19,12 @@ const db = require('./db');
 const rooms = new Map();
 
 // Helper to create a new game state
-function createGameState() {
-  const randomTeams = generateRandomTeams();
+function createGameState(leagueId = null) {
+  const randomTeams = generateRandomTeams(leagueId);
+  console.log(`[createGameState] LeagueId: ${leagueId}, teams has solutions: ${!!randomTeams.solutions}`);
+  if (randomTeams.solutions) {
+    console.log(`[createGameState] Solutions keys: ${Object.keys(randomTeams.solutions).join(', ')}`);
+  }
   return {
     board: [
       [null, null, null],
@@ -29,7 +33,7 @@ function createGameState() {
     ],
     currentTurn: 'player1',
     usedFootballers: new Set(),
-    teams: randomTeams,
+    teams: randomTeams, // This should include solutions if from fixed scenarios
     players: [], // Array of { socket, role, username }
     status: 'waiting', // waiting, playing
     host: null // username of host
@@ -79,10 +83,86 @@ function loadValidGames() {
 
 loadValidGames();
 
+// Load fixed scenarios
+let fixedScenarios = {};
+const fixedScenariosPath = path.join(__dirname, 'data', 'fixed_scenarios.json');
+
+function loadFixedScenarios() {
+  try {
+    console.log(`[loadFixedScenarios] Attempting to load from: ${fixedScenariosPath}`);
+    if (fs.existsSync(fixedScenariosPath)) {
+      const data = fs.readFileSync(fixedScenariosPath, 'utf8');
+      fixedScenarios = JSON.parse(data);
+      console.log(`[loadFixedScenarios] Successfully loaded fixed scenarios: ${Object.keys(fixedScenarios).join(', ')}`);
+      // Log details for each mode
+      Object.keys(fixedScenarios).forEach(mode => {
+        const games = fixedScenarios[mode];
+        console.log(`[loadFixedScenarios] Mode '${mode}': ${games.length} scenarios`);
+        games.forEach((game, idx) => {
+          const solutionCount = game.solutions ? Object.keys(game.solutions).length : 0;
+          console.log(`[loadFixedScenarios]   - ${game.id}: ${solutionCount} solutions`);
+        });
+      });
+    } else {
+      console.error(`[loadFixedScenarios] File not found at: ${fixedScenariosPath}`);
+    }
+  } catch (err) {
+    console.error('[loadFixedScenarios] Error loading fixed_scenarios.json:', err);
+    console.error(err.stack);
+  }
+}
+
+loadFixedScenarios();
+
+// Track sequential game index for each league
+const leagueCounters = {
+  amateur: 0,
+  pro: 0,
+  elite: 0
+};
+
 /**
- * Get random valid 3x3 teams from pre-calculated list
+ * Get teams for logic.
+ * If leagueType is provided (amateur/pro/elite), pick from fixed scenarios sequentially.
+ * Otherwise, use random generation.
  */
-function generateRandomTeams() {
+function generateRandomTeams(leagueType = null) {
+  // Map league IDs to scenario keys
+  const leagueMap = {
+    'amateur': 'easy',
+    'pro': 'medium',
+    'elite': 'hard'
+  };
+
+  console.log(`[generateRandomTeams] Called with leagueType: ${leagueType}`);
+  console.log(`[generateRandomTeams] fixedScenarios keys: ${Object.keys(fixedScenarios).join(', ')}`);
+
+  if (leagueType && leagueMap[leagueType] && fixedScenarios[leagueMap[leagueType]]) {
+    const mode = leagueMap[leagueType];
+    const games = fixedScenarios[mode];
+    console.log(`[generateRandomTeams] Found mode: ${mode}, games count: ${games ? games.length : 0}`);
+    if (games && games.length > 0) {
+      // Pick sequentially
+      const index = leagueCounters[leagueType] % games.length;
+      leagueCounters[leagueType]++; // Increment for next game
+
+      const scenario = games[index];
+      console.log(`[generateRandomTeams] Using fixed scenario: ${mode} - ${scenario.id}`);
+      console.log(`[generateRandomTeams] Solutions count: ${scenario.solutions ? Object.keys(scenario.solutions).length : 0}`);
+      console.log(`[generateRandomTeams] Solution keys: ${scenario.solutions ? Object.keys(scenario.solutions).join(', ') : 'none'}`);
+      return {
+        rows: scenario.rows,
+        cols: scenario.cols,
+        solutions: scenario.solutions // Attach solutions for validation
+      };
+    } else {
+      console.warn(`[generateRandomTeams] No games found for mode: ${mode}`);
+    }
+  } else {
+    console.log(`[generateRandomTeams] Not using fixed scenarios. leagueType: ${leagueType}, hasLeagueMap: ${!!(leagueType && leagueMap[leagueType])}, hasFixedScenarios: ${!!(leagueType && leagueMap[leagueType] && fixedScenarios[leagueMap[leagueType]])}`);
+  }
+
+  // Fallback to random generation
   if (validGames.length === 0) {
     return {
       rows: ['Barcelona', 'Real Madrid', 'Manchester United'],
@@ -90,11 +170,7 @@ function generateRandomTeams() {
     };
   }
 
-  // Pick a random configuration
   const config = validGames[Math.floor(Math.random() * validGames.length)];
-
-  // Pick 3 random cols from the potentialCols
-  // Shuffle potentialCols first
   const colsPool = [...config.potentialCols];
   for (let i = colsPool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -114,6 +190,16 @@ function resetRoom(roomId) {
   const room = rooms.get(roomId);
   if (!room) return;
 
+  // IMPORTANT: For leagues, we might want to rotate map on reset?
+  // Current logic keeps same teams. User said "Sonrakinde easy_2". 
+  // Should we regenerate teams on reset?
+  // "Reset" usually means "Restart same game". 
+  // If they want "Next Level", they should probably leave and join again?
+  // Or if it's a persistent room (custom), maybe same teams.
+  // For League: Usually match ends. Players leave.
+  // If they Rematch... maybe new teams?
+  // Let's keep reset as is for now (same teams). New Game = New Room usually in this architecture.
+
   room.board = [
     [null, null, null],
     [null, null, null],
@@ -121,13 +207,31 @@ function resetRoom(roomId) {
   ];
   room.currentTurn = 'player1';
   room.usedFootballers.clear();
-  room.status = 'playing'; // Reset usually means restart
+  room.status = 'playing';
 }
 
 /**
  * Check if a footballer exists and has played for both teams
+ * Updated to also check room.solutions if available
  */
-function isValidFootballerForTeams(footballerName, rowTeam, colTeam) {
+function isValidFootballerForTeams(footballerName, rowTeam, colTeam, room = null) {
+  // 1. Check Fixed Solutions first (Strict Mode)
+  if (room && room.teams && room.teams.solutions) {
+    const key = `${rowTeam}|${colTeam}`;
+    const keyReverse = `${colTeam}|${rowTeam}`;
+
+    // Strict check: Must match the solution in JSON exactly.
+    const validSolution = room.teams.solutions[key] || room.teams.solutions[keyReverse];
+
+    if (validSolution === footballerName) {
+      return true;
+    }
+    // If we are in specific scenario mode, ANY other answer is WRONG, 
+    // even if technically valid in real world.
+    return false;
+  }
+
+  // 2. Standard Validation (Random Game Mode)
   const footballer = playersData.find(p => p.name === footballerName);
   if (!footballer) {
     return false;
@@ -253,12 +357,16 @@ function sendInitialState(ws, roomId) {
   const role = player ? player.role : 'spectator';
 
   try {
+    console.log(`[sendInitialState] Room ${roomId} - teams has solutions: ${!!room.teams.solutions}`);
+    if (room.teams.solutions) {
+      console.log(`[sendInitialState] Solutions keys count: ${Object.keys(room.teams.solutions).length}`);
+    }
     const message = {
       type: 'init',
       payload: {
         role: role,
         board: room.board,
-        teams: room.teams,
+        teams: room.teams, // This includes solutions if it exists
         currentTurn: room.currentTurn,
         players: room.players.map(p => ({ role: p.role, username: p.username })), // Send username too
         status: room.status,
@@ -457,7 +565,7 @@ app.prepare().then(() => {
 
             const roomId = `Match-${Date.now()}`; // Auto-generated ID
 
-            const roomState = createGameState();
+            const roomState = createGameState(leagueId); // Pass leagueId to generate fixed scenario
             roomState.host = opponent.username; // Randomly assigned host
             roomState.league = leagueId; // Mark as league game
             roomState.prize = league.prize;
@@ -523,6 +631,84 @@ app.prepare().then(() => {
             payload: { emoji: data.payload.emoji, senderRole: role, username }
           });
 
+        } else if (data.type === 'getOptions') {
+          try {
+            const { row, col } = data.payload;
+            const conn = connections.get(ws);
+            if (!conn || !conn.roomId) {
+              ws.send(JSON.stringify({ type: 'options', payload: { row, col, options: [] } }));
+              return;
+            }
+            
+            const room = rooms.get(conn.roomId);
+            if (!room || row < 0 || row >= room.teams.rows.length || col < 0 || col >= room.teams.cols.length) {
+              ws.send(JSON.stringify({ type: 'options', payload: { row, col, options: [] } }));
+              return;
+            }
+
+            const rowTeam = room.teams.rows[row];
+            const colTeam = room.teams.cols[col];
+            const key = `${rowTeam}|${colTeam}`;
+            const keyReverse = `${colTeam}|${rowTeam}`;
+
+            let correctName = null;
+
+            // 1. Check Fixed Scenarios first
+            if (room.teams.solutions) {
+              correctName = room.teams.solutions[key] || room.teams.solutions[keyReverse];
+            }
+
+            // 2. Fallback to playersData if no solution found
+            if (!correctName && playersData && playersData.length > 0) {
+              const validPlayers = playersData.filter(p => p.teams && p.teams.includes(rowTeam) && p.teams.includes(colTeam));
+              if (validPlayers.length > 0) {
+                correctName = validPlayers[Math.floor(Math.random() * validPlayers.length)].name;
+              }
+            }
+
+            // 3. Last resort: use any random player
+            if (!correctName && playersData && playersData.length > 0) {
+              correctName = playersData[Math.floor(Math.random() * playersData.length)].name;
+            }
+
+            // Build options array
+            const options = [];
+            if (correctName) {
+              const isUsed = room.usedFootballers.has(correctName);
+              options.push({ name: correctName, isUsed });
+            }
+
+            // Add 3 wrong options
+            const wrongOptions = [];
+            if (playersData && playersData.length > 0) {
+              let attempts = 0;
+              while (wrongOptions.length < 3 && attempts < 100) {
+                const randomP = playersData[Math.floor(Math.random() * playersData.length)];
+                if (randomP && randomP.name !== correctName && !wrongOptions.find(w => w.name === randomP.name)) {
+                  wrongOptions.push({ name: randomP.name, isUsed: false });
+                }
+                attempts++;
+              }
+            } else {
+              wrongOptions.push({ name: "Player A", isUsed: false });
+              wrongOptions.push({ name: "Player B", isUsed: false });
+              wrongOptions.push({ name: "Player C", isUsed: false });
+            }
+            options.push(...wrongOptions);
+
+            // Shuffle
+            for (let i = options.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [options[i], options[j]] = [options[j], options[i]];
+            }
+
+            // ALWAYS send response
+            ws.send(JSON.stringify({ type: 'options', payload: { row, col, options } }));
+          } catch (e) {
+            console.error('[getOptions] ERROR:', e);
+            ws.send(JSON.stringify({ type: 'options', payload: { row: data.payload.row, col: data.payload.col, options: [] } }));
+          }
+
         } else if (data.type === 'startGame') {
           const { roomId } = connections.get(ws) || {};
           const room = rooms.get(roomId);
@@ -568,7 +754,7 @@ app.prepare().then(() => {
           const rowTeam = room.teams.rows[row];
           const colTeam = room.teams.cols[col];
 
-          if (!isValidFootballerForTeams(playerName, rowTeam, colTeam)) {
+          if (!isValidFootballerForTeams(playerName, rowTeam, colTeam, room)) {
             broadcastToRoom(roomId, {
               type: 'moveMissed',
               payload: { player: playerRole, playerName, row, col }
@@ -589,6 +775,8 @@ app.prepare().then(() => {
           });
 
           if (winnerResult) {
+            room.status = 'finished'; // Prevent forfeit if they leave now
+
             broadcastToRoom(roomId, {
               type: 'gameOver',
               payload: {
@@ -651,10 +839,14 @@ app.prepare().then(() => {
               const playerIndex = room.players.findIndex(p => p.socket === ws);
               if (playerIndex > -1) {
                 // Determine if this is a forfeit (game is playing)
-                if (room.status === 'playing') {
+                // Double check: if checkWinner returns a winner, DO NOT forfeit.
+                const verificationWinner = checkWinner(room.board);
+                if (room.status === 'playing' && !verificationWinner) {
                   const leavingPlayerRole = room.players[playerIndex].role;
                   const winnerRole = leavingPlayerRole === 'player1' ? 'player2' : 'player1';
                   const winnerPlayer = room.players.find(p => p.role === winnerRole);
+
+                  room.status = 'finished'; // Mark as finished so winner doesn't forfeit when they leave
 
                   console.log(`Player ${username} left active game. Forfeit! Winner: ${winnerPlayer?.username}`);
 
@@ -885,6 +1077,7 @@ app.prepare().then(() => {
     console.log(`> WebSocket server ready on ws://localhost:${PORT}`);
   });
 });
+
 
 
 

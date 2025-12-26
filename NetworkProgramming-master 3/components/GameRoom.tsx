@@ -13,12 +13,15 @@ interface GameRoomProps {
     onLeave: (isForfeit?: boolean) => void;
     onMakeMove: (row: number, col: number, player: string) => void;
     onAcceptMatch: () => void;
-    playersData: any[]; // Footballers list
+    playersData: any[]; // Kept for types? Actually purely visual now if server sends options
+    currentOptions: any[] | null;
+    onRequestOptions: (row: number, col: number) => void;
 }
 
 export default function GameRoom({
     user, roomId, role, isHost, gameState, gameOver, error,
-    onStartGame, onLeave, onMakeMove, onAcceptMatch, playersData
+    onStartGame, onLeave, onMakeMove, onAcceptMatch, playersData,
+    currentOptions, onRequestOptions
 }: GameRoomProps) {
     const [selectedCell, setSelectedCell] = useState<{ row: number, col: number } | null>(null);
     const [showForfeitModal, setShowForfeitModal] = useState(false);
@@ -46,49 +49,8 @@ export default function GameRoom({
         onAcceptMatch();
     };
 
-    // Reuse helper logic for options
-    const getOptions = (row: number, col: number) => {
-        if (!playersData.length || !gameState) return [];
-
-        const rowTeam = gameState.teams.rows[row];
-        const colTeam = gameState.teams.cols[col];
-
-        const valid = playersData.filter(p => p.teams.includes(rowTeam) && p.teams.includes(colTeam));
-        const used = new Set();
-        gameState.board.flat().forEach((c: any) => c && used.add(c.footballer));
-        const validUnused = valid.filter(p => !used.has(p.name));
-
-        // If no unused players, we should still show the USED players so the user knows why.
-        if (!validUnused.length) {
-            // Check if there are ANY valid players (even used ones)
-            const validUsed = valid.filter(p => used.has(p.name));
-            if (validUsed.length > 0) {
-                return validUsed.map(p => ({ player: p, isCorrect: true, isUsed: true }));
-            }
-            return [];
-        }
-
-        const correct = validUnused[0];
-        const options = [{ player: correct, isCorrect: true, isUsed: false }];
-
-        const wrong = playersData.filter(p => {
-            if (p.name === correct.name) return false;
-            if (used.has(p.name)) return false;
-            const hasRow = p.teams.includes(rowTeam);
-            const hasCol = p.teams.includes(colTeam);
-            return !(hasRow && hasCol);
-        }).slice(0, 3);
-
-        wrong.forEach(w => options.push({ player: w, isCorrect: false, isUsed: false }));
-
-        for (let i = options.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [options[i], options[j]] = [options[j], options[i]];
-        }
-        return options;
-    };
-
-    const playerOptions = selectedCell ? getOptions(selectedCell.row, selectedCell.col) : [];
+    // Derived state for rendering
+    const playerOptions = currentOptions || [];
 
     const canStart = isHost && gameState.status === 'waiting' && gameState.players.length >= 2;
 
@@ -225,7 +187,10 @@ export default function GameRoom({
                                                         className={`board-cell ${cell ? 'filled' : ''} ${isWin ? 'winning' : ''}`}
                                                         onClick={() => {
                                                             if (role !== gameState.currentTurn) return;
-                                                            if (!cell && !gameOver) setSelectedCell({ row: r, col: c });
+                                                            if (!cell && !gameOver) {
+                                                                setSelectedCell({ row: r, col: c });
+                                                                onRequestOptions(r, c);
+                                                            }
                                                         }}
                                                     >
                                                         {cell ? (
@@ -257,23 +222,53 @@ export default function GameRoom({
                                 {gameState.teams.rows[selectedCell.row]} & {gameState.teams.cols[selectedCell.col]}
                             </p>
                             <div className="player-list">
-                                {playerOptions.map((opt: any, i: number) => (
-                                    <button
-                                        key={i}
-                                        className={`player-button ${opt.isUsed ? 'disabled' : ''}`}
-                                        onClick={() => {
-                                            if (opt.isUsed) return;
-                                            onMakeMove(selectedCell.row, selectedCell.col, opt.player.name);
-                                            setSelectedCell(null);
-                                        }}
-                                        disabled={opt.isUsed}
-                                    >
-                                        {opt.player.name} {opt.isUsed ? '(Used)' : ''}
-                                    </button>
-                                ))}
+                                {currentOptions === null ? (
+                                    <div className="loading-spinner-container">
+                                        <div className="spinner"></div>
+                                        <p>Loading options...</p>
+                                    </div>
+                                ) : currentOptions.length === 0 ? (
+                                    <div style={{ padding: '1rem', textAlign: 'center' }}>
+                                        <p style={{ color: '#ff4444', marginBottom: '0.5rem' }}>No options found!</p>
+                                        {error && (
+                                            <p style={{ color: '#ffaa44', fontSize: '0.9rem' }}>{error}</p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    playerOptions.map((opt: any, i: number) => (
+                                        <button
+                                            key={i}
+                                            className={`player-button ${opt.isUsed ? 'disabled' : ''}`}
+                                            onClick={() => {
+                                                if (opt.isUsed) return;
+                                                onMakeMove(selectedCell.row, selectedCell.col, opt.name);
+                                                setSelectedCell(null);
+                                            }}
+                                            disabled={opt.isUsed}
+                                        >
+                                            {opt.name} {opt.isUsed ? '(Used)' : ''}
+                                        </button>
+                                    ))
+                                )}
                             </div>
-                            <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                                <button className="cancel-link" onClick={() => setSelectedCell(null)}>Cancel</button>
+                            <div style={{ textAlign: 'center', marginTop: '15px' }}>
+                                <button
+                                    className="cancel-btn-large"
+                                    style={{
+                                        background: '#333',
+                                        color: '#fff',
+                                        border: '1px solid #555',
+                                        padding: '12px 24px',
+                                        fontSize: '1rem',
+                                        borderRadius: '8px',
+                                        width: '100%',
+                                        cursor: 'pointer',
+                                        transition: 'background 0.2s'
+                                    }}
+                                    onClick={() => setSelectedCell(null)}
+                                >
+                                    Cancel Selection
+                                </button>
                             </div>
                         </div>
                     </div>

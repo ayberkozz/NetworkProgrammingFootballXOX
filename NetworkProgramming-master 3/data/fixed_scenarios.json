@@ -1,0 +1,152 @@
+{
+    "easy": [
+        {
+            "id": "easy_1",
+            "rows": [
+                "Barcelona",
+                "Real Madrid",
+                "Liverpool"
+            ],
+            "cols": [
+                "PSG",
+                "Juventus",
+                "Chelsea"
+            ],
+            "solutions": {
+                "Barcelona|PSG": "Neymar Jr",
+                "Barcelona|Juventus": "Dani Alves",
+                "Barcelona|Chelsea": "Cesc Fàbregas",
+                "Real Madrid|PSG": "Sergio Ramos",
+                "Real Madrid|Juventus": "Cristiano Ronaldo",
+                "Real Madrid|Chelsea": "Eden Hazard",
+                "Liverpool|PSG": "Georginio Wijnaldum",
+                "Liverpool|Juventus": "Emre Can",
+                "Liverpool|Chelsea": "Fernando Torres"
+            }
+        },
+        {
+            "id": "easy_2",
+            "rows": [
+                "Bayern Munich",
+                "Manchester United",
+                "Atlético Madrid"
+            ],
+            "cols": [
+                "Real Madrid",
+                "Barcelona",
+                "Inter"
+            ],
+            "solutions": {
+                "Bayern Munich|Real Madrid": "Xabi Alonso",
+                "Bayern Munich|Barcelona": "Robert Lewandowski",
+                "Bayern Munich|Inter": "Ivan Perišić",
+                "Manchester United|Real Madrid": "David Beckham",
+                "Manchester United|Barcelona": "Zlatan Ibrahimović",
+                "Manchester United|Inter": "Alexis Sánchez",
+                "Atlético Madrid|Real Madrid": "Thibaut Courtois",
+                "Atlético Madrid|Barcelona": "Antoine Griezmann",
+                "Atlético Madrid|Inter": "Diego Forlán"
+            }
+        }
+    ],
+    "medium": [
+        {
+            "id": "medium_1",
+            "rows": [
+                "Arsenal",
+                "Tottenham",
+                "AC Milan"
+            ],
+            "cols": [
+                "Real Madrid",
+                "Juventus",
+                "PSG"
+            ],
+            "solutions": {
+                "Arsenal|Real Madrid": "Mesut Özil",
+                "Arsenal|Juventus": "Thierry Henry",
+                "Arsenal|PSG": "Nicolas Anelka",
+                "Tottenham|Real Madrid": "Luka Modrić",
+                "Tottenham|Juventus": "Dejan Kulusevski",
+                "Tottenham|PSG": "Serge Aurier",
+                "AC Milan|Real Madrid": "Kaká",
+                "AC Milan|Juventus": "Andrea Pirlo",
+                "AC Milan|PSG": "Thiago Silva"
+            }
+        },
+        {
+            "id": "medium_2",
+            "rows": [
+                "Benfica",
+                "Porto",
+                "Chelsea"
+            ],
+            "cols": [
+                "Barcelona",
+                "Manchester City",
+                "Bayern Munich"
+            ],
+            "solutions": {
+                "Benfica|Barcelona": "Nélson Semedo",
+                "Benfica|Manchester City": "Rúben Dias",
+                "Benfica|Bayern Munich": "Renato Sanches",
+                "Porto|Barcelona": "Deco",
+                "Porto|Manchester City": "Eliaquim Mangala",
+                "Porto|Bayern Munich": "James Rodríguez",
+                "Chelsea|Barcelona": "Pedro",
+                "Chelsea|Manchester City": "Raheem Sterling",
+                "Chelsea|Bayern Munich": "Michael Ballack"
+            }
+        }
+    ],
+    "hard": [
+        {
+            "id": "hard_1",
+            "rows": [
+                "Valencia",
+                "Monaco",
+                "Roma"
+            ],
+            "cols": [
+                "Chelsea",
+                "Real Madrid",
+                "Barcelona"
+            ],
+            "solutions": {
+                "Valencia|Chelsea": "Juan Mata",
+                "Valencia|Real Madrid": "Raúl Albiol",
+                "Valencia|Barcelona": "Jordi Alba",
+                "Monaco|Chelsea": "Tiémoué Bakayoko",
+                "Monaco|Real Madrid": "Aurélien Tchouaméni",
+                "Monaco|Barcelona": "Ludovic Giuly",
+                "Roma|Chelsea": "Mohamed Salah",
+                "Roma|Real Madrid": "Julio Baptista",
+                "Roma|Barcelona": "Malcom"
+            }
+        },
+        {
+            "id": "hard_2",
+            "rows": [
+                "Ajax",
+                "Borussia Dortmund",
+                "Galatasaray"
+            ],
+            "cols": [
+                "AC Milan",
+                "PSG",
+                "Manchester United"
+            ],
+            "solutions": {
+                "Ajax|AC Milan": "Clarence Seedorf",
+                "Ajax|PSG": "Maxwell",
+                "Ajax|Manchester United": "Daley Blind",
+                "Borussia Dortmund|AC Milan": "Christian Pulisic",
+                "Borussia Dortmund|PSG": "Ousmane Dembélé",
+                "Borussia Dortmund|Manchester United": "Shinji Kagawa",
+                "Galatasaray|AC Milan": "Gheorghe Hagi",
+                "Galatasaray|PSG": "Bafétimbi Gomis",
+                "Galatasaray|Manchester United": "Nani"
+            }
+        }
+    ]
+}

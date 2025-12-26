@@ -54,6 +54,7 @@ export default function Home() {
   // Game State
   const [playersData, setPlayersData] = useState<Player[]>([]);
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [currentOptions, setCurrentOptions] = useState<any[] | null>(null); // Options from server
   const [myRole, setMyRole] = useState<'player1' | 'player2' | 'spectator'>('spectator');
   const [isHost, setIsHost] = useState(false);
   const [gameOver, setGameOver] = useState<{ winner: string; winningCells: number[][] | null } | null>(null);
@@ -100,6 +101,9 @@ export default function Home() {
           };
         });
         break;
+      case 'options':
+        setCurrentOptions(message.payload.options || []);
+        break;
       case 'gameStarted':
         setIsMatchmaking(false);
         setGameState(prev => prev ? { ...prev, status: 'playing' } : null);
@@ -110,6 +114,7 @@ export default function Home() {
           return { ...prev, board: message.payload.board };
         });
         setError(null);
+        setCurrentOptions(null);
         break;
       case 'turnChanged':
         setGameState((prev) => {
@@ -299,6 +304,12 @@ export default function Home() {
     wsRef.current.send(JSON.stringify({ type: 'acceptMatch' }));
   };
 
+  const handleRequestOptions = (row: number, col: number) => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    setCurrentOptions(null); // Show loading
+    wsRef.current.send(JSON.stringify({ type: 'getOptions', payload: { row, col } }));
+  };
+
   return (
     <div>
       {/* Matchmaking Overlay */}
@@ -341,6 +352,8 @@ export default function Home() {
           onMakeMove={makeMove}
           onAcceptMatch={acceptMatch}
           playersData={playersData}
+          currentOptions={currentOptions}
+          onRequestOptions={handleRequestOptions}
         />
       )}
     </div>
